@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>shiroX · Painel de Keys</title>
+<style>
+:root{
+  --snow:#F5F6F8; --paper:#FFFFFF; --ink:#171A21; --slate:#5B6472; --line:#DDE1E7;
+  --accent:#3D4FE0; --ok:#1F8A5B; --warn:#A86A00; --bad:#C93A3A;
+  --sans:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans);background:var(--snow);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* marca */
+.brand{display:inline-flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em}
+.mark{width:28px;height:28px;background:var(--ink);border-radius:7px;display:grid;place-items:center}
+.mark svg{width:14px;height:14px}
+
+/* acesso */
+#gate{min-height:100vh;display:grid;place-items:center;padding:24px;position:relative;overflow:hidden}
+#gate .bgx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.gate-card{position:relative;width:100%;max-width:380px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:32px 28px}
+.gate-card h1{font-size:26px;margin:18px 0 4px;letter-spacing:-.02em}
+.gate-card p{margin:0 0 22px;color:var(--slate);font-size:15px}
+.gate-card.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin:8px 0 0}
+
+/* campos */
+label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.hint{font-weight:400;color:var(--slate)}
+input[type=text],input[type=password],input[type=number],select,textarea{
+  width:100%;padding:11px 12px;background:var(--paper);border:1px solid var(--line);border-radius:9px;min-height:44px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 18px;border-radius:9px;border:1px solid var(--ink);background:var(--ink);color:#fff;font-weight:600;cursor:pointer}
+.btn:hover{background:#000}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--ink);background:var(--paper)}
+.btn.small{min-height:36px;padding:0 12px;font-size:13px}
+.btn.danger{color:var(--bad);border-color:var(--line);background:transparent}
+.btn.danger:hover{border-color:var(--bad);background:#fff}
+.btn.block{width:100%;margin-top:14px}
+
+/* app */
+header.top{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+main{max-width:980px;margin:0 auto;padding:22px 16px 80px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.stat{padding:16px;background:var(--snow);border:1px solid var(--line);border-radius:12px}
+.stat:first-child{grid-column:1/-1}
+.stat b{display:block;font-size:28px;letter-spacing:-.02em;line-height:1.2}
+.stat span{font-size:14px;color:var(--slate)}
+.stat.s-disponivel b{color:var(--accent)}
+.stat.s-ativa b{color:var(--ok)}
+.stat.s-expirada b{color:var(--warn)}
+.stat.s-revogada b{color:var(--bad)}
+@media(min-width:641px){
+  .stats{grid-template-columns:repeat(5,1fr)}
+  .stat:first-child{grid-column:auto}
+}
+.tabs{display:flex;gap:4px;margin:22px 0 16px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{background:none;border:0;padding:12px 14px;font-weight:600;color:var(--slate);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ink)}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h2{margin:0 0 4px;font-size:18px;letter-spacing:-.01em}
+.panel .sub{margin:0 0 20px;color:var(--slate);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.full{grid-column:1/-1}
+.preview{font-family:var(--mono);font-size:15px;background:var(--snow);border:1px dashed var(--line);border-radius:9px;padding:12px 14px;word-break:break-all}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* resultado */
+.out{margin-top:22px;border-top:1px solid var(--line);padding-top:18px}
+.out-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.out-head strong{font-size:15px}
+.keybox{font-family:var(--mono);font-size:14px;background:var(--snow);border:1px solid var(--line);border-radius:9px;padding:12px 14px;max-height:260px;overflow:auto;white-space:pre;user-select:all}
+
+/* lista */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input{flex:1 1 200px}
+.toolbar select{flex:0 1 170px}
+.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .k{font-family:var(--mono);font-weight:600;font-size:14px;flex:1 1 260px;word-break:break-all}
+.row .meta{flex:1 1 200px;font-size:13px;color:var(--slate)}
+.row .ops{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid currentColor}
+.pill.disponivel{color:var(--accent)}
+.pill.ativa{color:var(--ok)}
+.pill.expirada{color:var(--warn)}
+.pill.revogada{color:var(--bad)}
+.empty{padding:34px 10px;text-align:center;color:var(--slate)}
+.bulk{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+
+/* validar */
+.result{margin-top:18px;border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--snow);font-size:14px}
+.result dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:10px 0 0}
+.result dt{color:var(--slate)}
+.result dd{margin:0;word-break:break-word}
+
+.chip{display:inline-flex;align-items:center;gap:2px;margin:4px 4px 0 0;padding:1px 2px 1px 9px;border:1px solid var(--line);border-radius:99px;font-family:var(--mono);font-size:12px;background:var(--snow);color:var(--ink)}
+.chip button{border:0;background:none;cursor:pointer;font-size:16px;line-height:1;color:var(--slate);min-width:26px;min-height:26px}
+.chip button:hover{color:var(--bad)}
+.limlab{display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:400;color:var(--slate)}
+.row input.lim{width:70px;min-height:36px;padding:6px 8px}
+
+.hright{display:flex;align-items:center;gap:10px}
+.crumb{font-size:14px;font-weight:600;color:var(--slate)}
+@media(max-width:420px){.crumb{display:none}}
+.menuwrap{position:relative}
+.dots{width:44px;height:44px;display:grid;place-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.dots:hover,.dots[aria-expanded=true]{border-color:var(--ink)}
+.dots svg{width:20px;height:20px}
+.menu{position:absolute;right:0;top:calc(100% + 8px);min-width:230px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(23,26,33,.12)}
+.mi{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:0 12px;background:none;border:0;border-radius:8px;text-align:left;cursor:pointer;font-weight:500}
+.mi:hover{background:var(--snow)}
+.mi svg{width:18px;height:18px;flex:none;color:var(--slate)}
+.mi.on{background:var(--snow);font-weight:700}
+.mi.on svg{color:var(--accent)}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:20}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ACESSO -->
+<div id="gate">
+  <svg class="bgx" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <line x1="18" y1="8" x2="82" y2="92" stroke="#E4E7EC" stroke-width="7" stroke-linecap="square"/>
+    <line x1="82" y1="8" x2="18" y2="92" stroke="#E4E7EC" stroke-width="7" stroke-linecap="square"/>
+  </svg>
+  <div class="gate-card" id="gateCard">
+    <span class="brand"><span class="mark"><svg viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></span>shiroX</span>
+    <h1>Painel de keys</h1>
+    <p>Digite a chave de acesso para entrar.</p>
+    <label for="access">Chave de acesso</label>
+    <input type="password" id="access" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="err" id="gateErr" role="alert"></div>
+    <button class="btn block" id="enter">Entrar</button>
+  </div>
+</div>
+
+<!-- PAINEL -->
+<div id="app" hidden>
+  <header class="top">
+    <span class="brand"><span class="mark"><svg viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></span>shiroX</span>
+    <div class="hright">
+      <span class="crumb" id="crumb">Gerar keys</span>
+      <div class="menuwrap">
+        <button class="dots" id="dotsBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="menu" aria-label="Abrir menu">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="10" cy="4" r="1.8"/><circle cx="10" cy="10" r="1.8"/><circle cx="10" cy="16" r="1.8"/></svg>
+        </button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <button class="mi on" role="menuitem" data-tab="gerar" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Gerar keys
+          </button>
+          <button class="mi" role="menuitem" data-tab="keys">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>Minhas keys
+          </button>
+          <button class="mi" role="menuitem" data-tab="validar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Validar e ativar
+          </button>
+          <button class="mi" role="menuitem" data-tab="resumo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Resumo
+          </button>
+        </div>
+      </div>
+      <button class="btn ghost small" id="logout">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- GERAR -->
+    <section class="panel" id="tab-gerar">
+      <h2>Gerar keys</h2>
+      <p class="sub">Defina o formato, a duração e em quantos dispositivos cada key pode ser usada.</p>
+      <div class="grid">
+        <div>
+          <label for="qty">Quantidade <span class="hint">(1 a 500)</span></label>
+          <input type="number" id="qty" value="1" min="1" max="500" inputmode="numeric">
+        </div>
+        <div>
+          <label for="prefix">Prefixo <span class="hint">(opcional)</span></label>
+          <input type="text" id="prefix" value="SHIRO" maxlength="10" autocapitalize="characters" spellcheck="false">
+        </div>
+        <div>
+          <label for="game">Jogo</label>
+          <select id="game">
+            <option value="blood-strike" selected>Blood Strike</option>
+          </select>
+        </div>
+        <div>
+          <label for="segs">Blocos</label>
+          <select id="segs"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
+        </div>
+        <div>
+          <label for="len">Caracteres por bloco</label>
+          <select id="len"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>8</option></select>
+        </div>
+        <div>
+          <label for="charset">Tipo de caracteres</label>
+          <select id="charset">
+            <option value="alnum" selected>Letras e números</option>
+            <option value="hex">Hexadecimal (0-9, A-F)</option>
+            <option value="num">Só números</option>
+            <option value="letters">Só letras</option>
+          </select>
+        </div>
+        <div>
+          <label for="dur">Duração após ativar</label>
+          <select id="dur">
+            <option value="1">1 dia</option>
+            <option value="7">7 dias</option>
+            <option value="30" selected>30 dias</option>
+            <option value="90">90 dias</option>
+            <option value="180">180 dias</option>
+            <option value="365">1 ano</option>
+            <option value="0">Vitalícia</option>
+            <option value="custom">Personalizada</option>
+          </select>
+        </div>
+        <div id="customWrap" hidden>
+          <label for="customDays">Dias personalizados</label>
+          <input type="number" id="customDays" value="15" min="1" max="3650" inputmode="numeric">
+        </div>
+        <div>
+          <label for="maxDev">Dispositivos por key <span class="hint">(1 a 1000)</span></label>
+          <input type="number" id="maxDev" value="1" min="1" max="1000" inputmode="numeric">
+        </div>
+        <div class="full">
+          <label for="note">Nota <span class="hint">(opcional, ex.: nome do cliente)</span></label>
+          <input type="text" id="note" maxlength="60">
+        </div>
+        <div class="full">
+          <label>Exemplo do formato</label>
+          <div class="preview" id="preview"></div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn" id="gen">Gerar keys</button></div>
+
+      <div class="out" id="out" hidden>
+        <div class="out-head">
+          <strong id="outTitle"></strong>
+          <span style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost small" id="copyNew">Copiar todas</button>
+            <button class="btn ghost small" id="dlNew">Baixar .txt</button>
+          </span>
+        </div>
+        <div class="keybox" id="newKeys"></div>
+      </div>
+    </section>
+
+    <!-- LISTA -->
+    <section class="panel" id="tab-keys" hidden>
+      <h2>Minhas keys</h2>
+      <p class="sub">Busque, copie, revogue ou exclua qualquer key.</p>
+      <div class="toolbar">
+        <input type="text" id="search" placeholder="Buscar por key ou nota" spellcheck="false" aria-label="Buscar">
+        <select id="filter" aria-label="Filtrar por status">
+          <option value="todas">Todas</option>
+          <option value="disponivel">Disponíveis</option>
+          <option value="ativa">Ativas</option>
+          <option value="expirada">Expiradas</option>
+          <option value="revogada">Revogadas</option>
+        </select>
+      </div>
+      <div id="list"></div>
+      <div class="bulk">
+        <button class="btn ghost small" id="expCsv">Exportar CSV</button>
+        <button class="btn ghost small" id="expTxt">Exportar .txt</button>
+        <button class="btn danger small" id="delExpired">Excluir expiradas</button>
+        <button class="btn danger small" id="delAll">Excluir tudo</button>
+      </div>
+    </section>
+
+    <!-- VALIDAR -->
+    <section class="panel" id="tab-validar" hidden>
+      <h2>Validar e ativar</h2>
+      <p class="sub">Verifique o status de uma key ou ative para iniciar a contagem da duração.</p>
+      <p class="sub">ID deste dispositivo: <strong style="font-family:var(--mono);color:var(--ink)" id="devId"></strong></p>
+      <label for="vkey">Key</label>
+      <input type="text" id="vkey" placeholder="SHIRO-XXXX-XXXX-XXXX-XXXX" spellcheck="false" autocapitalize="characters">
+      <div class="actions">
+        <button class="btn" id="vcheck">Verificar</button>
+        <button class="btn ghost" id="vredeem">Ativar key</button>
+      </div>
+      <div class="result" id="vres" hidden></div>
+    </section>
+    <!-- RESUMO -->
+    <section class="panel" id="tab-resumo" hidden>
+      <h2>Resumo</h2>
+      <p class="sub">Veja quantas keys estão em cada situação.</p>
+      <div class="stats" id="stats"></div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const ACCESS_CODES = ['shiroX', 'Carlos', 'kaio'];
+const STORE = 'shirox-keys';
+const DAY = 86400000;
+const SETS = {
+  alnum:'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+  hex:'0123456789ABCDEF',
+  num:'0123456789',
+  letters:'ABCDEFGHJKLMNPQRSTUVWXYZ'
+};
+let keys = [];
+let lastBatch = [];
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ---------- armazenamento ---------- */
+function migrateKey(k){
+  if(!Array.isArray(k.devices)) k.devices = k.device ? [k.device] : [];
+  delete k.device; delete k.deviceAt;
+  if(!k.maxDevices) k.maxDevices = 1;
+  if(!k.game){ k.game = 'blood-strike'; k.gameLabel = 'Blood Strike'; }
+  return k;
+}
+async function load(){
+  try{
+    const r = await window.storage.get(STORE);
+    if(r && r.value){
+      const text = await decryptData(r.value);
+      keys = JSON.parse(text).map(migrateKey);
+    }
+  }catch(e){ /* sem dados salvos ainda, ou senha de acesso mudou */ }
+}
+async function save(){
+  try{ await window.storage.set(STORE, await encryptData(JSON.stringify(keys))); }catch(e){}
+}
+function licPayload(k){
+  return JSON.stringify({
+    days: k.days, maxDevices: k.maxDevices||1, devices: k.devices||[],
+    activatedAt: k.activatedAt||null, expiresAt: k.expiresAt||null, revoked: !!k.revoked,
+    game: k.game||'blood-strike', gameLabel: k.gameLabel||'Blood Strike'
+  });
+}
+async function mirrorLicense(k){
+  try{ await window.storage.set('lic:'+k.key, licPayload(k), true); }catch(e){}
+}
+async function unmirrorLicense(key){
+  try{ await window.storage.delete('lic:'+key, true); }catch(e){}
+}
+
+/* ---------- criptografia (AES-GCM) ---------- */
+let CRYPTO_KEY = null;
+async function getCryptoKey(){
+  if(CRYPTO_KEY) return CRYPTO_KEY;
+  const raw = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('shirox::vault::v1'));
+  CRYPTO_KEY = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt','decrypt']);
+  return CRYPTO_KEY;
+}
+function toB64(bytes){ let s=''; bytes.forEach(b=>s+=String.fromCharCode(b)); return btoa(s); }
+function fromB64(str){ return Uint8Array.from(atob(str), c=>c.charCodeAt(0)); }
+async function encryptData(text){
+  const key = await getCryptoKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(text)));
+  return 'ENC1:' + toB64(iv) + ':' + toB64(enc);
+}
+async function decryptData(payload){
+  if(!payload.startsWith('ENC1:')) return payload; // dados antigos, sem criptografia
+  const [, ivB64, dataB64] = payload.split(':');
+  const key = await getCryptoKey();
+  const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv: fromB64(ivB64)}, key, fromB64(dataB64));
+  return new TextDecoder().decode(dec);
+}
+
+/* ---------- identificação do dispositivo ---------- */
+let DEVICE = '';
+function hash(str){
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for(let i=0;i<str.length;i++){
+    const c = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+  return (h2>>>0).toString(16).padStart(8,'0') + (h1>>>0).toString(16).padStart(8,'0');
+}
+function fingerprint(){
+  const n = navigator, s = screen;
+  let tz = ''; try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(e){}
+  return [n.platform, n.hardwareConcurrency, n.deviceMemory, n.maxTouchPoints, n.language, s.width, s.height, s.colorDepth, tz].join('|');
+}
+async function loadDevice(){
+  let seed = '';
+  try{ const r = await window.storage.get('shirox-device'); if(r && r.value) seed = r.value; }catch(e){}
+  if(!seed){
+    const a = new Uint32Array(4); crypto.getRandomValues(a); seed = [...a].join('-');
+    try{ await window.storage.set('shirox-device', seed); }catch(e){}
+  }
+  const h = hash(fingerprint() + '|' + seed).toUpperCase();
+  DEVICE = 'DV-' + h.slice(0,4) + '-' + h.slice(4,8) + '-' + h.slice(8,12);
+}
+function plural(n){ return n + (n===1 ? ' dispositivo' : ' dispositivos'); }
+function deviceText(k){
+  const max = k.maxDevices || 1, n = k.devices.length;
+  if(!k.activatedAt) return 'até ' + plural(max);
+  return n + ' de ' + max + ' em uso' + (k.devices.includes(DEVICE) ? ' (inclui este aparelho)' : '');
+}
+
+/* ---------- utilidades ---------- */
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(()=>t.classList.remove('on'), 2200);
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(ts){ return ts ? new Date(ts).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '-'; }
+function durLabel(d){ return d===0 ? 'Vitalícia' : d===1 ? '1 dia' : d+' dias'; }
+async function copy(text){
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(_){} ta.remove();
+  }
+  toast('Copiado');
+}
+function download(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text],{type:type||'text/plain'}));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function confirmTwice(btn, label, fn){
+  if(btn.dataset.armed){ clearTimeout(btn._t); delete btn.dataset.armed; btn.textContent = btn.dataset.orig; fn(); return; }
+  btn.dataset.orig = btn.textContent; btn.dataset.armed = '1'; btn.textContent = label;
+  btn._t = setTimeout(()=>{ delete btn.dataset.armed; btn.textContent = btn.dataset.orig; }, 3000);
+}
+
+/* ---------- geração ---------- */
+function rand(n){
+  const a = new Uint32Array(1), lim = Math.floor(0x100000000/n)*n; let x;
+  do{ crypto.getRandomValues(a); x = a[0]; }while(x >= lim);
+  return x % n;
+}
+function makeKey(o){
+  const set = SETS[o.charset], segs = [];
+  for(let i=0;i<o.segs;i++){ let s=''; for(let j=0;j<o.len;j++) s += set[rand(set.length)]; segs.push(s); }
+  return (o.prefix ? [o.prefix,...segs] : segs).join('-');
+}
+function readOpts(){
+  const dv = $('#dur').value;
+  return {
+    qty: Math.min(500, Math.max(1, parseInt($('#qty').value)||1)),
+    game: $('#game').value,
+    gameLabel: $('#game').selectedOptions[0].textContent,
+    prefix: $('#prefix').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10),
+    segs: +$('#segs').value,
+    len: +$('#len').value,
+    charset: $('#charset').value,
+    days: dv==='custom' ? Math.min(3650, Math.max(1, parseInt($('#customDays').value)||1)) : +dv,
+    maxDev: Math.min(1000, Math.max(1, parseInt($('#maxDev').value)||1)),
+    note: $('#note').value.trim()
+  };
+}
+function updatePreview(){
+  const o = readOpts();
+  $('#preview').textContent = makeKey(o);
+  $('#customWrap').hidden = $('#dur').value !== 'custom';
+}
+async function generate(){
+  const o = readOpts();
+  const space = Math.pow(SETS[o.charset].length, o.segs*o.len);
+  if(space < (keys.length + o.qty) * 2){ toast('Formato pequeno demais. Aumente blocos ou caracteres.'); return; }
+  const existing = new Set(keys.map(k=>k.key));
+  const batch = []; let guard = 0;
+  while(batch.length < o.qty && guard++ < o.qty*50){
+    const k = makeKey(o);
+    if(existing.has(k)) continue;
+    existing.add(k);
+    batch.push({
+      id: k, key: k, days: o.days, note: o.note, createdAt: Date.now(),
+      game: o.game, gameLabel: o.gameLabel,
+      activatedAt: null, expiresAt: null, revoked: false, devices: [], maxDevices: o.maxDev
+    });
+  }
+  keys = batch.concat(keys);
+  lastBatch = batch.map(b=>b.key);
+  await save();
+  for(const k of batch) await mirrorLicense(k);
+  $('#out').hidden = false;
+  $('#outTitle').textContent = batch.length + (batch.length===1 ? ' key gerada' : ' keys geradas') + ' para ' + o.gameLabel + ' (' + durLabel(o.days).toLowerCase() + ', ' + o.maxDev + (o.maxDev===1 ? ' dispositivo' : ' dispositivos') + ' por key)';
+  $('#newKeys').textContent = lastBatch.join('\n');
+  renderStats(); renderList();
+  toast('Keys geradas');
+}
+
+/* ---------- status ---------- */
+function statusOf(k){
+  if(k.revoked) return 'revogada';
+  if(!k.activatedAt) return 'disponivel';
+  if(k.expiresAt && k.expiresAt <= Date.now()) return 'expirada';
+  return 'ativa';
+}
+const LABEL = {disponivel:'Disponível',ativa:'Ativa',expirada:'Expirada',revogada:'Revogada'};
+function remaining(k){
+  if(!k.expiresAt) return 'sem vencimento';
+  const ms = k.expiresAt - Date.now();
+  if(ms <= 0) return 'venceu em ' + fmt(k.expiresAt);
+  const d = Math.floor(ms/DAY), h = Math.floor((ms%DAY)/3600000);
+  return 'restam ' + (d>0 ? d+' d ' : '') + h + ' h';
+}
+
+/* ---------- render ---------- */
+function renderStats(){
+  const c = {total:keys.length, disponivel:0, ativa:0, expirada:0, revogada:0};
+  keys.forEach(k=>c[statusOf(k)]++);
+  $('#stats').innerHTML =
+    [['Total',c.total],['Disponíveis',c.disponivel],['Ativas',c.ativa],['Expiradas',c.expirada],['Revogadas',c.revogada]]
+    .map(([l,v])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+}
+function filtered(){
+  const q = $('#search').value.trim().toLowerCase(), f = $('#filter').value;
+  return keys.filter(k=>{
+    if(f!=='todas' && statusOf(k)!==f) return false;
+    return !q || k.key.toLowerCase().includes(q) || (k.note||'').toLowerCase().includes(q) || (k.gameLabel||'').toLowerCase().includes(q);
+  });
+}
+function renderList(){
+  const list = filtered();
+  if(!list.length){
+    $('#list').innerHTML = `<div class="empty">${keys.length ? 'Nenhuma key encontrada com esse filtro.' : 'Você ainda não gerou nenhuma key. Vá em Gerar keys para criar a primeira.'}</div>`;
+    return;
+  }
+  $('#list').innerHTML = list.map(k=>{
+    const s = statusOf(k);
+    const chips = k.devices.length ? '<br>' + k.devices.map(d=>`<span class="chip">${esc(d)}${d===DEVICE?' (este)':''}<button data-act="rmdev" data-id="${esc(k.id)}" data-dev="${esc(d)}" aria-label="Remover dispositivo ${esc(d)}">×</button></span>`).join('') : '';
+    const info = s==='disponivel'
+      ? `${durLabel(k.days)} após ativar`
+      : `${remaining(k)}`;
+    return `<div class="row">
+      <div class="k">${esc(k.key)}</div>
+      <div class="meta"><span class="pill ${s}">${LABEL[s]}</span> <span class="pill" style="color:var(--slate)">${esc(k.gameLabel||'Blood Strike')}</span><br>${info}<br>Dispositivos: ${esc(deviceText(k))}${chips}<br>Criada em ${fmt(k.createdAt)}${k.note ? '<br>Nota: '+esc(k.note) : ''}</div>
+      <div class="ops">
+        <button class="btn ghost small" data-act="copy" data-id="${esc(k.id)}">Copiar</button>
+        <label class="limlab">Limite <input type="number" class="lim" min="1" max="1000" value="${k.maxDevices||1}" data-id="${esc(k.id)}" aria-label="Limite de dispositivos"></label>
+        ${k.devices.length ? `<button class="btn ghost small" data-act="unbind" data-id="${esc(k.id)}">Liberar todos</button>` : ''}
+        <button class="btn ghost small" data-act="revoke" data-id="${esc(k.id)}">${k.revoked?'Reativar':'Revogar'}</button>
+        <button class="btn danger small" data-act="del" data-id="${esc(k.id)}">Excluir</button>
+      </div></div>`;
+  }).join('');
+}
+
+/* ---------- validar ---------- */
+function findKey(){
+  const v = $('#vkey').value.trim().toUpperCase();
+  return v ? keys.find(k=>k.key===v) : null;
+}
+function showResult(k, msg){
+  const box = $('#vres'); box.hidden = false;
+  if(!k){ box.innerHTML = '<strong>Key não encontrada.</strong> Confira se digitou corretamente.'; return; }
+  const s = statusOf(k);
+  box.innerHTML = `${msg ? '<strong>'+msg+'</strong>' : ''}
+    <dl>
+      <dt>Jogo</dt><dd>${esc(k.gameLabel||'Blood Strike')}</dd>
+      <dt>Status</dt><dd><span class="pill ${s}">${LABEL[s]}</span></dd>
+      <dt>Duração</dt><dd>${durLabel(k.days)}</dd>
+      <dt>Dispositivos</dt><dd>${esc(deviceText(k))}</dd>
+      <dt>Ativada em</dt><dd>${fmt(k.activatedAt)}</dd>
+      <dt>Vence em</dt><dd>${k.activatedAt ? (k.expiresAt ? fmt(k.expiresAt)+' ('+remaining(k)+')' : 'Nunca') : '-'}</dd>
+      ${k.note ? '<dt>Nota</dt><dd>'+esc(k.note)+'</dd>' : ''}
+    </dl>`;
+}
+
+/* ---------- eventos ---------- */
+async function sha256hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+let ACCESS_HASHES = null;
+async function tryEnter(){
+  if(!ACCESS_HASHES) ACCESS_HASHES = await Promise.all(ACCESS_CODES.map(c=>sha256hex('shirox::' + c)));
+  const typed = await sha256hex('shirox::' + $('#access').value);
+  if(ACCESS_HASHES.includes(typed)){
+    $('#gate').hidden = true; $('#app').hidden = false; $('#gateErr').textContent = '';
+    $('#access').value = '';
+    init();
+  }else{
+    $('#gateErr').textContent = 'Chave incorreta. Tente de novo.';
+    const c = $('#gateCard'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+    $('#access').select();
+  }
+}
+$('#enter').onclick = tryEnter;
+$('#access').addEventListener('keydown', e=>{ if(e.key==='Enter') tryEnter(); });
+$('#logout').onclick = ()=>{ $('#app').hidden = true; $('#gate').hidden = false; $('#access').focus(); };
+
+const TITLES = {gerar:'Gerar keys', keys:'Minhas keys', validar:'Validar e ativar'};
+function closeMenu(){ $('#menu').hidden = true; $('#dotsBtn').setAttribute('aria-expanded','false'); }
+function openTab(name){
+  Object.keys(TITLES).forEach(n=>$('#tab-'+n).hidden = n!==name);
+  $$('.mi').forEach(m=>{
+    const on = m.dataset.tab===name;
+    m.classList.toggle('on', on);
+    if(on) m.setAttribute('aria-current','page'); else m.removeAttribute('aria-current');
+  });
+  $('#crumb').textContent = TITLES[name];
+  if(name==='keys') renderList();
+  closeMenu();
+  window.scrollTo(0,0);
+}
+$('#dotsBtn').onclick = e=>{
+  e.stopPropagation();
+  const open = $('#menu').hidden;
+  $('#menu').hidden = !open;
+  $('#dotsBtn').setAttribute('aria-expanded', String(open));
+  if(open) $('#menu .mi.on').focus();
+};
+$$('.mi').forEach(m=>m.onclick = ()=>openTab(m.dataset.tab));
+document.addEventListener('click', e=>{ if(!e.target.closest('.menuwrap')) closeMenu(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#menu').hidden){ closeMenu(); $('#dotsBtn').focus(); } });
+
+['qty','prefix','segs','len','charset','dur','customDays'].forEach(id=>{
+  $('#'+id).addEventListener('input', updatePreview);
+  $('#'+id).addEventListener('change', updatePreview);
+});
+$('#gen').onclick = generate;
+$('#copyNew').onclick = ()=>copy(lastBatch.join('\n'));
+$('#dlNew').onclick = ()=>download('shirox-keys-'+Date.now()+'.txt', lastBatch.join('\n'));
+
+$('#search').addEventListener('input', renderList);
+$('#filter').addEventListener('change', renderList);
+$('#list').addEventListener('click', async e=>{
+  const b = e.target.closest('button[data-act]'); if(!b) return;
+  const k = keys.find(x=>x.id===b.dataset.id); if(!k) return;
+  if(b.dataset.act==='copy') copy(k.key);
+  if(b.dataset.act==='revoke'){ k.revoked = !k.revoked; await save(); await mirrorLicense(k); toast(k.revoked?'Key revogada':'Key reativada'); renderStats(); renderList(); }
+  if(b.dataset.act==='unbind'){ k.devices = []; await save(); await mirrorLicense(k); toast('Dispositivos liberados'); renderList(); }
+  if(b.dataset.act==='rmdev'){ k.devices = k.devices.filter(d=>d!==b.dataset.dev); await save(); await mirrorLicense(k); toast('Dispositivo removido'); renderList(); }
+  if(b.dataset.act==='del') confirmTwice(b, 'Confirmar?', async ()=>{ keys = keys.filter(x=>x!==k); await save(); await unmirrorLicense(k.key); toast('Key excluída'); renderStats(); renderList(); });
+});
+$('#list').addEventListener('change', async e=>{
+  const i = e.target.closest('input.lim'); if(!i) return;
+  const k = keys.find(x=>x.id===i.dataset.id); if(!k) return;
+  k.maxDevices = Math.min(1000, Math.max(1, parseInt(i.value)||1));
+  await save(); await mirrorLicense(k); toast('Limite: ' + plural(k.maxDevices)); renderList();
+});
+$('#expCsv').onclick = ()=>{
+  if(!keys.length) return toast('Nenhuma key para exportar');
+  const rows = [['key','jogo','status','duracao','criada','ativada','vence','limite_dispositivos','dispositivos','nota']].concat(
+    keys.map(k=>[k.key, k.gameLabel||'Blood Strike', LABEL[statusOf(k)], durLabel(k.days), fmt(k.createdAt), fmt(k.activatedAt), k.activatedAt ? (k.expiresAt ? fmt(k.expiresAt) : 'Nunca') : '-', k.maxDevices||1, k.devices.join(' ')||'-', k.note||'']));
+  download('shirox-keys.csv', rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'), 'text/csv');
+};
+$('#expTxt').onclick = ()=>{
+  if(!keys.length) return toast('Nenhuma key para exportar');
+  download('shirox-keys.txt', filtered().map(k=>k.key).join('\n'));
+};
+$('#delExpired').onclick = function(){
+  confirmTwice(this, 'Confirmar?', async ()=>{
+    const removed = keys.filter(k=>statusOf(k)==='expirada');
+    keys = keys.filter(k=>statusOf(k)!=='expirada'); await save();
+    for(const k of removed) await unmirrorLicense(k.key);
+    toast(removed.length+' expiradas excluídas'); renderStats(); renderList();
+  });
+};
+$('#delAll').onclick = function(){
+  confirmTwice(this, 'Confirmar exclusão?', async ()=>{
+    const removed = keys.slice();
+    keys = []; await save();
+    for(const k of removed) await unmirrorLicense(k.key);
+    toast('Todas as keys foram excluídas'); renderStats(); renderList();
+  });
+};
+
+$('#vcheck').onclick = ()=>{
+  const k = findKey(); let m = '';
+  if(k && statusOf(k)==='ativa'){
+    if(k.devices.includes(DEVICE)) m = 'Válida neste dispositivo.';
+    else if(k.devices.length >= (k.maxDevices||1)) m = 'Bloqueada: o limite de ' + plural(k.maxDevices||1) + ' já foi atingido.';
+    else m = 'Válida, mas este dispositivo ainda não está vinculado. Toque em Ativar key para vincular.';
+  }
+  showResult(k, m);
+};
+$('#vredeem').onclick = async ()=>{
+  const k = findKey();
+  if(!k) return showResult(null);
+  const s = statusOf(k);
+  if(s==='revogada') return showResult(k, 'Esta key foi revogada e não pode ser ativada.');
+  if(s==='expirada') return showResult(k, 'Esta key expirou.');
+  if(s==='ativa'){
+    if(k.devices.includes(DEVICE)) return showResult(k, 'Esta key já está ativa neste dispositivo.');
+    if(k.devices.length >= (k.maxDevices||1)) return showResult(k, 'Bloqueada: o limite de ' + plural(k.maxDevices||1) + ' já foi atingido.');
+    k.devices.push(DEVICE);
+    await save(); await mirrorLicense(k); renderList();
+    return showResult(k, 'Dispositivo adicionado à key.');
+  }
+  k.activatedAt = Date.now();
+  k.expiresAt = k.days ? k.activatedAt + k.days*DAY : null;
+  k.devices = [DEVICE];
+  await save(); await mirrorLicense(k); renderStats(); renderList();
+  showResult(k, 'Key ativada e vinculada a este dispositivo.');
+};
+$('#vkey').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#vcheck').click(); });
+
+async function init(){
+  await load();
+  await loadDevice();
+  $('#devId').textContent = DEVICE;
+  updatePreview(); renderStats(); renderList(); openTab('gerar');
+}
+$('#access').focus();
+</script>
+</body>
+</html>
